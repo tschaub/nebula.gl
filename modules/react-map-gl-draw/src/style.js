@@ -1,4 +1,4 @@
-import { RENDER_STATE, RENDER_TYPE } from './constants';
+import { RENDER_STATE, RENDER_TYPE, GEOJSON_TYPE } from './constants';
 
 const RECT_STYLE = {
   stroke: '#7ac943',
@@ -42,7 +42,7 @@ const DEFAULT_STYLE = {
 };
 
 export function featureStyle({ feature, state }) {
-  const renderType = feature.properties.renderType;
+  const geometryType = feature.geometry.type;
   let style = null;
 
   switch (state) {
@@ -67,8 +67,8 @@ export function featureStyle({ feature, state }) {
       style = { ...DEFAULT_STYLE };
   }
 
-  switch (renderType) {
-    case RENDER_TYPE.POINT:
+  switch (geometryType) {
+    case GEOJSON_TYPE.POINT:
       style.r = CIRCLE_RADIUS;
       break;
     case RENDER_TYPE.LINE_STRING:
