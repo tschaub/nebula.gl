@@ -1,7 +1,7 @@
 // @flow
 import { _MapContext as MapContext } from 'react-map-gl';
 import React, { PureComponent } from 'react';
-import { ImmutableFeatureCollection } from '@nebula.gl/edit-modes';
+import { ImmutableFeatureCollection, DrawPointMode } from '@nebula.gl/edit-modes';
 
 import type { Feature, Position, EditAction } from '@nebula.gl/edit-modes';
 import type { MjolnirEvent } from 'mjolnir.js';
@@ -13,7 +13,7 @@ import { getScreenCoords, isNumeric, parseEventElement } from './edit-modes/util
 import {
   SelectMode,
   EditingMode,
-  DrawPointMode,
+  // DrawPointMode,
   DrawLineStringMode,
   DrawRectangleMode,
   DrawPolygonMode
@@ -140,7 +140,8 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
     const viewport = this._context && this._context.viewport;
 
     return {
-      data: featureCollection,
+      data: featureCollection.getObject(),
+      // data: featureCollection,
       selectedIndexes: [selectedFeatureIndex],
       lastPointerMoveEvent,
       viewport,

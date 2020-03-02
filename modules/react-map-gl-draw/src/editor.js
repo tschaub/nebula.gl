@@ -32,12 +32,16 @@ export default class Editor extends ModeHandler {
       return '';
     }
 
+    if (type === GEOJSON_TYPE.POINT) {
+      return this.project(coordinates);
+    }
+
     const screenCoords = coordinates.map(p => this.project(p));
 
     let pathString = '';
     switch (type) {
-      case GEOJSON_TYPE.POINT:
-        return screenCoords;
+      // case GEOJSON_TYPE.POINT:
+      //   return screenCoords;
 
       case GEOJSON_TYPE.LINE_STRING:
         pathString = screenCoords.map(p => `${p[0]},${p[1]}`).join('L');
@@ -345,8 +349,10 @@ export default class Editor extends ModeHandler {
     return [fill, committedPath, uncommittedPath, closingPath].filter(Boolean);
   };
 
-  _renderGuides = ({ tentativeFeature, editHandles }: Object) => {
+  _renderGuides = (guides: Object) => {
     const features = this.getFeatures();
+    const editHandles = guides.features.filter(f => f.properties.guideType === 'editHandle');
+    const tentativeFeature = guides.features.find(f => f.properties.guideType === 'tentative');
     const cursorEditHandle = editHandles.find(
       f => f.properties.guideType === GUIDE_TYPE.CURSOR_EDIT_HANDLE
     );
