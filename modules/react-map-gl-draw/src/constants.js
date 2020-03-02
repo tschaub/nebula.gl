@@ -1,5 +1,6 @@
 // @flow
 
+// TODO: delete
 export const MODES = {
   READ_ONLY: 'READ_ONLY',
   SELECT: 'SELECT',
@@ -10,6 +11,7 @@ export const MODES = {
   DRAW_RECTANGLE: 'DRAW_RECTANGLE'
 };
 
+// TODO: delete
 export const DRAWING_MODE = [
   MODES.DRAW_POINT,
   MODES.DRAW_PATH,
@@ -23,6 +25,7 @@ export const GEOJSON_TYPE = {
   POLYGON: 'Polygon'
 };
 
+// TODO: delete?
 export const RENDER_TYPE = {
   POINT: 'Point',
   LINE_STRING: 'LineString',
@@ -30,6 +33,7 @@ export const RENDER_TYPE = {
   RECTANGLE: 'Rectangle'
 };
 
+// TODO: delete?
 export const RENDER_STATE = {
   INACTIVE: 'INACTIVE',
   UNCOMMITTED: 'UNCOMMITTED',
@@ -38,6 +42,7 @@ export const RENDER_STATE = {
   CLOSING: 'CLOSING'
 };
 
+// TODO: delete
 export const GUIDE_TYPE = {
   TENTATIVE: 'tentative',
   EDIT_HANDLE: 'editHandle',
@@ -51,6 +56,7 @@ export const ELEMENT_TYPE = {
   EDIT_HANDLE: 'editHandle'
 };
 
+// TODO: delete
 export const EDIT_TYPE = {
   ADD_FEATURE: 'addFeature',
   ADD_POSITION: 'addPosition',

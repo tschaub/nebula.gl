@@ -378,7 +378,7 @@ export default class Editor extends ModeHandler {
     const elemKey = `feature.${index}`;
     if (shape === 'rect') {
       return (
-        <g key={elemKey} transform={`translate(${path[0][0]}, ${path[0][1]})`}>
+        <g key={elemKey} transform={`translate(${path[0]}, ${path[1]})`}>
           <rect
             data-type={ELEMENT_TYPE.FEATURE}
             data-feature-index={index}
@@ -402,7 +402,7 @@ export default class Editor extends ModeHandler {
     }
 
     return (
-      <g key={`feature.${index}`} transform={`translate(${path[0][0]}, ${path[0][1]})`}>
+      <g key={`feature.${index}`} transform={`translate(${path[0]}, ${path[1]})`}>
         <circle
           data-type={ELEMENT_TYPE.FEATURE}
           data-feature-index={index}
@@ -505,17 +505,14 @@ export default class Editor extends ModeHandler {
       return null;
     }
 
-    const {
-      properties: { renderType },
-      geometry: { type }
-    } = feature;
-    const path = this._getPathInScreenCoords(coordinates, type);
+    const geometryType = feature.geometry.type;
+    const path = this._getPathInScreenCoords(coordinates, geometryType);
     if (!path) {
       return null;
     }
 
-    switch (renderType) {
-      case RENDER_TYPE.POINT:
+    switch (geometryType) {
+      case 'Point':
         return this._renderPoint(feature, index, path);
       case RENDER_TYPE.LINE_STRING:
         return this._renderPath(feature, index, path);
@@ -531,7 +528,7 @@ export default class Editor extends ModeHandler {
 
   _renderCanvas = () => {
     const features = this.getFeatures();
-    const guides = this._modeHandler && this._modeHandler.getGuides(this.getModeProps());
+    const guides = this._modeInstance && this._modeInstance.getGuides(this.getModeProps());
 
     return (
       <svg key="draw-canvas" width="100%" height="100%">

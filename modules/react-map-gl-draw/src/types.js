@@ -2,7 +2,9 @@
 
 import type { WebMercatorViewport } from 'viewport-mercator-project';
 import type {
+  GeoJsonEditMode,
   Feature,
+  FeatureCollection,
   ImmutableFeatureCollection,
   PointerMoveEvent,
   EditAction,
@@ -46,7 +48,8 @@ export type ModeProps<TData> = {
 };
 
 export type EditorProps = {
-  mode: Mode,
+  mode: GeoJsonEditMode,
+  modeConfig?: any,
   style: ?Object,
   features: ?(Feature[]),
   selectedFeatureIndex: ?number,
@@ -55,6 +58,7 @@ export type EditorProps = {
   editHandleShape: Function | string,
   editHandleStyle: Function | any,
   featureStyle: Function | any,
+  onEdit: (editAction: EditAction<FeatureCollection>) => mixed,
   onUpdate: Function,
   onSelect: Function
 };

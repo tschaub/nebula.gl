@@ -1,28 +1,34 @@
 // @flow
 import { _MapContext as MapContext } from 'react-map-gl';
 import React, { PureComponent } from 'react';
-import { ImmutableFeatureCollection, DrawPointMode } from '@nebula.gl/edit-modes';
+import {
+  ImmutableFeatureCollection,
+  ViewMode,
+  TranslateMode,
+  DrawPointMode,
+  DrawLineStringMode,
+  DrawRectangleMode,
+  DrawPolygonMode
+} from '@nebula.gl/edit-modes';
 
-import type { Feature, Position, EditAction } from '@nebula.gl/edit-modes';
+import type {
+  Feature,
+  FeatureCollection,
+  ModeProps,
+  Position,
+  EditAction
+} from '@nebula.gl/edit-modes';
 import type { MjolnirEvent } from 'mjolnir.js';
 import type { BaseEvent, EditorProps, EditorState, SelectAction } from './types';
 import memoize from './memoize';
 
-import { DRAWING_MODE, EDIT_TYPE, ELEMENT_TYPE, MODES } from './constants';
+import { DRAWING_MODE, ELEMENT_TYPE, MODES } from './constants';
 import { getScreenCoords, isNumeric, parseEventElement } from './edit-modes/utils';
-import {
-  SelectMode,
-  EditingMode,
-  // DrawPointMode,
-  DrawLineStringMode,
-  DrawRectangleMode,
-  DrawPolygonMode
-} from './edit-modes';
 
-const MODE_TO_HANDLER = Object.freeze({
-  [MODES.READ_ONLY]: null,
-  [MODES.SELECT]: SelectMode,
-  [MODES.EDITING]: EditingMode,
+const MODE_NAME_MAPPING = Object.freeze({
+  [MODES.READ_ONLY]: ViewMode,
+  [MODES.SELECT]: ViewMode,
+  [MODES.EDITING]: TranslateMode,
   [MODES.DRAW_POINT]: DrawPointMode,
   [MODES.DRAW_PATH]: DrawLineStringMode,
   [MODES.DRAW_RECTANGLE]: DrawRectangleMode,
@@ -30,7 +36,7 @@ const MODE_TO_HANDLER = Object.freeze({
 });
 
 const defaultProps = {
-  mode: MODES.READ_ONLY,
+  mode: ViewMode,
   features: null,
   onSelect: null,
   onUpdate: null
@@ -78,13 +84,13 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
   }
 
   componentDidMount() {
-    this._setupModeHandler();
+    this._setupModeInstance();
   }
 
   componentDidUpdate(prevProps: EditorProps) {
     if (prevProps.mode !== this.props.mode) {
       this._clearEditingState();
-      this._setupModeHandler();
+      this._setupModeInstance();
     }
   }
 
@@ -94,18 +100,18 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
 
   _events: any;
   _eventsRegistered: boolean;
-  _modeHandler: any;
+  _modeInstance: any;
   _context: ?MapContext;
   _containerRef: ?HTMLElement;
 
   getFeatures = () => {
-    let featureCollection = this._getFeatureCollection();
+    let featureCollection = this._getImmutableFeatureCollection();
     featureCollection = featureCollection && featureCollection.getObject();
     return featureCollection && featureCollection.features;
   };
 
   addFeatures = (features: Feature | Feature[]) => {
-    let featureCollection = this._getFeatureCollection();
+    let featureCollection = this._getImmutableFeatureCollection();
     if (featureCollection) {
       if (!Array.isArray(features)) {
         features = [features];
@@ -117,7 +123,7 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
   };
 
   deleteFeatures = (featureIndexes: number | number[]) => {
-    let featureCollection = this._getFeatureCollection();
+    let featureCollection = this._getImmutableFeatureCollection();
     const selectedFeatureIndex = this._getSelectedFeatureIndex();
     if (featureCollection) {
       if (!Array.isArray(featureIndexes)) {
@@ -132,8 +138,9 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
     }
   };
 
-  getModeProps() {
-    const featureCollection = this._getFeatureCollection();
+  getModeProps(): ModeProps<FeatureCollection> {
+    const { modeConfig } = this.props;
+    const featureCollection = this._getImmutableFeatureCollection();
 
     const { lastPointerMoveEvent } = this.state;
     const selectedFeatureIndex = this._getSelectedFeatureIndex();
@@ -142,10 +149,16 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
     return {
       data: featureCollection.getObject(),
       // data: featureCollection,
+      modeConfig,
       selectedIndexes: [selectedFeatureIndex],
+
       lastPointerMoveEvent,
       viewport,
-      onEdit: this._onEdit
+      onEdit: this._onEdit,
+
+      // TODO: handle changing cursor
+      cursor: null,
+      onUpdateCursor: (cursor: ?string) => {}
     };
   }
 
@@ -170,26 +183,32 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
     });
   });
 
-  _getFeatureCollection = () => {
+  _getImmutableFeatureCollection = () => {
     return this._getMemorizedFeatureCollection({
       propsFeatures: this.props.features,
       stateFeatures: this.state.featureCollection
     });
   };
 
-  _setupModeHandler = () => {
-    const mode = this.props.mode;
+  _setupModeInstance = () => {
+    const { mode } = this.props;
 
-    if (!mode || mode === MODES.READ_ONLY) {
+    if (!mode) {
       this._degregisterEvents();
-      this._modeHandler = null;
+      this._modeInstance = null;
       return;
     }
 
     this._registerEvents();
 
-    const HandlerClass = MODE_TO_HANDLER[mode];
-    this._modeHandler = HandlerClass ? new HandlerClass() : null;
+    if (typeof mode === 'function') {
+      const ModeConstructor = mode;
+      this._modeInstance = new ModeConstructor();
+    } else if (typeof mode === 'string') {
+      this._modeInstance = new MODE_NAME_MAPPING[mode]();
+    } else {
+      this._modeInstance = null;
+    }
   };
 
   /* EDITING OPERATIONS */
@@ -240,39 +259,14 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
     }
   };
 
-  _onEdit = (editAction: EditAction) => {
-    const { mode } = this.props;
-    const { editType, updatedData } = editAction;
+  _onEdit = (editAction: EditAction<FeatureCollection>) => {
+    if (this.props.onEdit) {
+      this.props.onEdit(editAction);
+    }
 
-    switch (editType) {
-      case EDIT_TYPE.MOVE_POSITION:
-        // intermediate feature, do not need forward to application
-        // only need update editor internal state
-        this._onUpdate(editAction, true);
-        break;
-      case EDIT_TYPE.ADD_FEATURE:
-        this._onUpdate(editAction);
-        if (mode === MODES.DRAW_PATH) {
-          const context = (editAction.editContext && editAction.editContext[0]) || {};
-          const { screenCoords, mapCoords } = context;
-          const featureIndex = updatedData.features.length - 1;
-          const selectedFeature = this._getSelectedFeature(featureIndex);
-          this._onSelect({
-            selectedFeature,
-            selectedFeatureIndex: featureIndex,
-            selectedEditHandleIndex: null,
-            screenCoords,
-            mapCoords
-          });
-        }
-        break;
-      case EDIT_TYPE.ADD_POSITION:
-      case EDIT_TYPE.REMOVE_POSITION:
-      case EDIT_TYPE.FINISH_MOVE_POSITION:
-        this._onUpdate(editAction);
-        break;
-
-      default:
+    if (!this.props.features) {
+      // Also update internal state of features if features aren't controlled
+      this.setState({ featureCollection: new ImmutableFeatureCollection(editAction.updatedData) });
     }
   };
 
@@ -341,7 +335,7 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
     }
 
     const modeProps = this.getModeProps();
-    this._modeHandler.handleClick(event, modeProps);
+    this._modeInstance.handleClick(event, modeProps);
   };
 
   _onPointerMove = (event: BaseEvent) => {
@@ -373,7 +367,7 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
 
     if (this.state.didDrag) {
       const modeProps = this.getModeProps();
-      this._modeHandler.handlePointerMove(pointerMoveEvent, modeProps);
+      this._modeInstance.handlePointerMove(pointerMoveEvent, modeProps);
     }
 
     this.setState({
@@ -400,7 +394,7 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
     this.setState(newState);
 
     const modeProps = this.getModeProps();
-    this._modeHandler.handleStartDragging(startDraggingEvent, modeProps);
+    this._modeInstance.handleStartDragging(startDraggingEvent, modeProps);
   };
 
   _onPointerUp = (event: MjolnirEvent) => {
@@ -421,7 +415,7 @@ export default class ModeHandler extends PureComponent<EditorProps, EditorState>
     this.setState(newState);
 
     const modeProps = this.getModeProps();
-    this._modeHandler.handleStopDragging(stopDraggingEvent, modeProps);
+    this._modeInstance.handleStopDragging(stopDraggingEvent, modeProps);
   };
 
   _onPan = (event: BaseEvent) => {
