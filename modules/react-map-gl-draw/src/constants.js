@@ -6,11 +6,10 @@ export const GEOJSON_TYPE = {
   POLYGON: 'Polygon'
 };
 
-export const RENDER_TYPE = {
-  POINT: 'Point',
-  LINE_STRING: 'LineString',
-  POLYGON: 'Polygon',
-  RECTANGLE: 'Rectangle'
+export const SHAPE = {
+  ...GEOJSON_TYPE,
+  RECTANGLE: 'Rectangle',
+  CIRCLE: 'Circle'
 };
 
 export const RENDER_STATE = {

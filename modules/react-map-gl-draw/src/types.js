@@ -11,13 +11,13 @@ import type {
   ScreenCoordinates
 } from '@nebula.gl/edit-modes';
 
-import { RENDER_STATE, GEOJSON_TYPE, RENDER_TYPE } from './constants';
+import { RENDER_STATE, GEOJSON_TYPE, SHAPE } from './constants';
 
 export type Id = string | number;
 
 export type RenderState = $Values<typeof RENDER_STATE>;
 export type GeoJsonType = $Values<typeof GEOJSON_TYPE>;
-export type RenderType = $Values<typeof RENDER_TYPE>;
+export type Shape = $Values<typeof SHAPE>;
 
 export type SelectAction = {
   selectedFeature: ?Feature,
@@ -40,6 +40,7 @@ export type ModeProps<TData> = {
 export type EditorProps = {
   mode: Object,
   style: ?Object,
+  selectable: ?Boolean,
   features: ?(Feature[]),
   selectedFeatureIndex: ?number,
   clickRadius: number,
@@ -49,7 +50,8 @@ export type EditorProps = {
   featureStyle: Function | any,
   featuresDraggable: ?boolean,
   onUpdate: Function,
-  onSelect: Function
+  onSelect: Function,
+  onUpdateCursor: ?Function
 };
 
 export type EditorState = {

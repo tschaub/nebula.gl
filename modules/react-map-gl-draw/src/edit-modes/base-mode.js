@@ -4,6 +4,7 @@ import type {
   EditMode,
   GuideFeatureCollection,
   Feature,
+  EditHandle,
   ClickEvent,
   PointerMoveEvent,
   StartDraggingEvent,
@@ -50,7 +51,7 @@ export default class BaseMode implements EditMode<FeatureCollection, GuideFeatur
     this._tentativeFeature = feature;
   };
 
-  getEditHandlesFromFeature(feature: Feature, featureIndex: ?number) {
+  getEditHandlesFromFeature(feature: Feature, featureIndex: ?number): ?(EditHandle[]) {
     const coordinates = getFeatureCoordinates(feature);
     if (!coordinates) {
       return null;
@@ -62,12 +63,13 @@ export default class BaseMode implements EditMode<FeatureCollection, GuideFeatur
           // TODO deprecate renderType
           renderType: feature.properties.renderType,
           guideType: GUIDE_TYPE.EDIT_HANDLE,
+          editHandleType: 'existing',
           featureIndex,
           positionIndexes: [i]
         },
         geometry: {
           type: GEOJSON_TYPE.POINT,
-          coordinates: [coord]
+          coordinates: coord
         }
       };
     });
@@ -75,8 +77,7 @@ export default class BaseMode implements EditMode<FeatureCollection, GuideFeatur
 
   getSelectedFeature = (props: ModeProps<FeatureCollection>, featureIndex: ?number) => {
     const { data, selectedIndexes } = props;
-    const featureCollection = data.getObject();
-    const features = featureCollection && featureCollection.features;
+    const features = data && data.features;
 
     const selectedIndex = isNumeric(featureIndex)
       ? Number(featureIndex)
