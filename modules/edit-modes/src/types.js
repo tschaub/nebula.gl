@@ -96,6 +96,7 @@ export type EditHandleType =
 export type EditHandleFeature = FeatureWithProps<
   Point,
   {
+    shape?: any,
     guideType: 'editHandle',
     editHandleType: EditHandleType,
     featureIndex: number,
@@ -106,6 +107,7 @@ export type EditHandleFeature = FeatureWithProps<
 export type TentativeFeature = FeatureWithProps<
   Geometry,
   {
+    shape?: any,
     guideType: 'tentative'
   }
 >;
