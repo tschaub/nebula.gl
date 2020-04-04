@@ -77,7 +77,9 @@ describe('dragToDraw=false', () => {
           ...props.data.features,
           {
             type: 'Feature',
-            properties: {},
+            properties: {
+              shape: 'Rectangle'
+            },
             geometry: {
               type: 'Polygon',
               coordinates: [[[1, 2], [2, 2], [2, 3], [1, 3], [1, 2]]]
@@ -141,7 +143,9 @@ describe('dragToDraw=true', () => {
           ...props.data.features,
           {
             type: 'Feature',
-            properties: {},
+            properties: {
+              shape: 'Rectangle'
+            },
             geometry: {
               type: 'Polygon',
               coordinates: [[[1, 2], [2, 2], [2, 3], [1, 3], [1, 2]]]

@@ -15,6 +15,9 @@ export class DrawRectangleUsingThreePointsMode extends ThreeClickPolygonMode {
 
     return {
       type: 'Feature',
+      properties: {
+        shape: 'Rectangle'
+      },
       geometry: {
         type: 'Polygon',
         coordinates: [
